@@ -3,7 +3,7 @@
 
 ## IDENTITY
 # sinfo_mon
-# v2.0
+# v2.1
 
 
 ## DESCRIPTION
@@ -12,10 +12,12 @@
 
 
 ## CHECK FOR PARAMETERS / ENFORCE PROPER USAGE
-if [ "$#" -ne 2 ]; then
+if [ "$#" -lt 2 -o "$#" -gt 3 ]; then
 	echo "sinfo_mon: incorrect number of varibles"
-	echo "sinfo_mon: usage"
+	echo "sinfo_mon: usage:"
 	echo "sinfo_mon:   $0 </path/to/data_dir> <email@address>"
+	echo "sinfo_mon: OR"
+	echo "sinfo_mon:   $0 </path/to/data_dir> <to_email@address> <from_email@address>"
 	exit 1
 fi
 
@@ -23,6 +25,12 @@ fi
 ## BIND USER-DEFINED VARIABLES
 DATA_DIR="$1" # e.g., /root/cron/sinfo_mon_data
 CONTACT="$2" # e.g., blah@my.org
+FROM="$2" # set from address equal to to address in case it is not specified
+if [ -n "$3" ]; then
+	# if from address is specified, override
+	FROM="$3"
+fi
+echo "$FROM"
 
 
 ## DEFINE GLOBAL VARIABLES
@@ -107,7 +115,7 @@ fi
 ## PREPARE AND SEND A REPORT
 echo "To: $CONTACT" >> $MAIL_FILE
 echo "Subject: LSST: new verify-worker nodes down according to Slurm" >> $MAIL_FILE
-echo "From: root@lsst-dev01.ncsa.illinois.edu" >> $MAIL_FILE
+echo "From: $FROM" >> $MAIL_FILE
 echo "" >> $MAIL_FILE
 echo "The following new nodes are down/down* according to Slurm (down = unavailable for use, down* = down and not responding):" >> $MAIL_FILE
 if [[ ! -f $NEW_NODES_FILE ]]; then
