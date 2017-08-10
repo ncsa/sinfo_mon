@@ -30,7 +30,6 @@ if [ -n "$3" ]; then
 	# if from address is specified, override
 	FROM="$3"
 fi
-echo "$FROM"
 
 
 ## DEFINE GLOBAL VARIABLES
