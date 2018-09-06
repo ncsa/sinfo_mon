@@ -3,7 +3,7 @@
 
 ## IDENTITY
 # sinfo_mon
-# v2.1
+# v2.2
 
 
 ## DESCRIPTION
@@ -54,11 +54,11 @@ rm -f $STATE_CURRENT_UNSORTED_FILE \
 
 
 ## CHECK TO SEE IF NODES ARE DOWN AND REPORT INTO THE APPROPRIATE FILES
-down_nodes_compact=$(sinfo | grep "down " | awk '{print $6}')
-downstar_nodes_compact=$(sinfo | grep "down\* " | awk '{print $6}')
+down_nodes_compact=$(sinfo | grep "down " | awk '{print $6}' | tr '\n' ',')
+downstar_nodes_compact=$(sinfo | grep "down\* " | awk '{print $6}' | tr '\n' ',')
 
 if [[ ! -z $down_nodes_compact ]]; then
-	down_nodes_list=$(scontrol show hostname $down_nodes_compact)
+	down_nodes_list=$(scontrol show hostname $down_nodes_compact | sort)
 	for i in $down_nodes_list
 	do
 		# echo the node names into the file adding a comma to aid future parsing
@@ -68,7 +68,7 @@ if [[ ! -z $down_nodes_compact ]]; then
 fi
 
 if [[ ! -z $downstar_nodes_compact ]]; then
-	downstar_nodes_list=$(scontrol show hostname $downstar_nodes_compact)
+	downstar_nodes_list=$(scontrol show hostname $downstar_nodes_compact | sort)
 	for i in $downstar_nodes_list
 	do
 		# echo the node names into the file adding a comma to aid future parsing
