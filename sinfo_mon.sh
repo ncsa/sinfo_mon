@@ -113,7 +113,7 @@ fi
 
 ## PREPARE AND SEND A REPORT
 echo "To: $CONTACT" >> $MAIL_FILE
-echo "Subject: LSST: new verify-worker nodes down according to Slurm" >> $MAIL_FILE
+echo "Subject: $HOSTNAME: new compute nodes down according to Slurm" >> $MAIL_FILE
 echo "From: $FROM" >> $MAIL_FILE
 echo "" >> $MAIL_FILE
 echo "The following new nodes are down/down* according to Slurm (down = unavailable for use, down* = down and not responding):" >> $MAIL_FILE
