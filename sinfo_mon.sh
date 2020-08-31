@@ -3,7 +3,7 @@
 
 ## IDENTITY
 # sinfo_mon
-# v2.2
+# v2.3
 
 
 ## DESCRIPTION
@@ -12,23 +12,37 @@
 
 
 ## CHECK FOR PARAMETERS / ENFORCE PROPER USAGE
-if [ "$#" -lt 2 -o "$#" -gt 3 ]; then
+if [ "$#" -ne 1 ]; then
 	echo "sinfo_mon: incorrect number of varibles"
 	echo "sinfo_mon: usage:"
-	echo "sinfo_mon:   $0 </path/to/data_dir> <email@address>"
-	echo "sinfo_mon: OR"
-	echo "sinfo_mon:   $0 </path/to/data_dir> <to_email@address> <from_email@address>"
+	echo "sinfo_mon:   $0 </path/to/config_file>"
 	exit 1
 fi
 
 
 ## BIND USER-DEFINED VARIABLES
-DATA_DIR="$1" # e.g., /root/cron/sinfo_mon_data
-CONTACT="$2" # e.g., blah@my.org
-FROM="$2" # set from address equal to to address in case it is not specified
-if [ -n "$3" ]; then
-	# if from address is specified, override
-	FROM="$3"
+CFG_FILE="$1" # e.g., /root/cron/sinfo_mon.cfg
+
+
+## MAKE SURE CONFIG FILE EXISTS
+if [ ! -f "$CFG_FILE" ]; then
+        echo "sinfo_mon: config file does not exist"
+        exit 2
+fi
+
+
+## SOURCE CFG FILE
+source "$CFG_FILE"
+### should define:
+###        DATA_DIR
+###        SINFO_PATH
+###        SCONTROL_PATH
+###        MAIL_CMD
+###        CONTACT
+###        (optional) FROM
+### if FROM is NOT set, use CONTACT
+if [ -z "$FROM" ]; then
+        FROM="$CONTACT"
 fi
 
 
@@ -54,11 +68,11 @@ rm -f $STATE_CURRENT_UNSORTED_FILE \
 
 
 ## CHECK TO SEE IF NODES ARE DOWN AND REPORT INTO THE APPROPRIATE FILES
-down_nodes_compact=$(sinfo | grep "down " | awk '{print $6}' | tr '\n' ',')
-downstar_nodes_compact=$(sinfo | grep "down\* " | awk '{print $6}' | tr '\n' ',')
+down_nodes_compact=$("$SINFO_PATH" | grep "down " | awk '{print $6}' | tr '\n' ',')
+downstar_nodes_compact=$("$SINFO_PATH" | grep "down\* " | awk '{print $6}' | tr '\n' ',')
 
 if [[ ! -z $down_nodes_compact ]]; then
-	down_nodes_list=$(scontrol show hostname $down_nodes_compact | sort)
+	down_nodes_list=$("$SCONTROL_PATH" show hostname $down_nodes_compact | sort)
 	for i in $down_nodes_list
 	do
 		# echo the node names into the file adding a comma to aid future parsing
@@ -68,7 +82,7 @@ if [[ ! -z $down_nodes_compact ]]; then
 fi
 
 if [[ ! -z $downstar_nodes_compact ]]; then
-	downstar_nodes_list=$(scontrol show hostname $downstar_nodes_compact | sort)
+	downstar_nodes_list=$("$SCONTROL_PATH" show hostname $downstar_nodes_compact | sort)
 	for i in $downstar_nodes_list
 	do
 		# echo the node names into the file adding a comma to aid future parsing
@@ -150,8 +164,9 @@ if [[ -f $OLD_NODES_FILE ]]; then
 		fi
 	done
 fi
-sendmail $CONTACT < $MAIL_FILE
+$MAIL_CMD $CONTACT < $MAIL_FILE
 
 
 ## MAKE THE CURRENT STATE THE NEW PREVIOUS STATE FOR THE NEXT RUN
 cp $STATE_CURRENT_FILE $STATE_PREVIOUS_FILE
+
